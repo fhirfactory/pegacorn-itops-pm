@@ -1,5 +1,5 @@
-import { MainLayout } from 'components/Layout';
-import PageSpinner from 'components/PageSpinner';
+import MainLayout from './components/Layout/MainLayout';
+import PageSpinner from './components/PageSpinner';
 import React from 'react';
 import componentQueries from 'react-component-queries';
 import './styles/app.scss';
@@ -13,7 +13,7 @@ class App extends React.Component {
       </React.Suspense>
     );
   }
-}
+};
 
 const query = ({ width }) => {
   if (width < 575) {

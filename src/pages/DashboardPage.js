@@ -3,8 +3,8 @@ import { MdBubbleChart, MdImportantDevices, MdInsertChart, MdShowChart, MdUpdate
 import ReactJson from 'react-json-view';
 import NotificationSystem from 'react-notification-system';
 import { Card, CardBody, CardHeader, Col, ListGroup, ListGroupItem, Row } from 'reactstrap';
-import { getColor } from 'utils/colors';
-import { NOTIFICATION_SYSTEM_STYLE } from 'utils/constants';
+import { getColor } from '../utils/colors';
+import { NOTIFICATION_SYSTEM_STYLE } from '../utils/constants';
 import { AppContext } from '../components/Layout/Sidebar';
 
 const today = new Date();
@@ -58,6 +58,7 @@ class DashboardPage extends React.Component {
           src={this.state.refreshedData}
           name={false}
           theme={"codeschool"}
+          collapsed={2}
           collapseStringsAfterLength={90}
           indentWidth={2}
           style={{ fontSize: "small" }}

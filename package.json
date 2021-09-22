@@ -6,6 +6,7 @@
     "@naisutech/react-tree": "^2.0.11",
     "bootstrap": "4.3.1",
     "classnames": "^2.2.6",
+    "node-sass": "^4.11.0",
     "prop-types": "^15.7.2",
     "react": "^16.8.4",
     "react-component-queries": "^2.3.0",
@@ -19,14 +20,13 @@
     "react-router-dom": "^4.3.1",
     "react-simple-maps": "^0.12.1",
     "react-sizeme": "^2.5.2",
+    "react-scripts": "^4.0.3",
     "reactstrap": "^7.1.0",
     "safe-flat": "^2.0.2",
     "unescape-js": "^1.1.4"
   },
   "devDependencies": {
     "gh-pages": "^1.2.0",
-    "node-sass": "^4.11.0",
-    "react-scripts": "2.1.8",
     "serve": "^10.1.2",
     "stylelint": "^9.3.0",
     "stylelint-config-recommended-scss": "^3.2.0",

@@ -1,8 +1,8 @@
-import SearchInput from 'components/SearchInput';
+import SearchInput from '../SearchInput';
 import React from 'react';
 import { MdClearAll } from 'react-icons/md';
 import { Button, Nav, Navbar } from 'reactstrap';
-import bn from 'utils/bemnames';
+import bn from '../../utils/bemnames';
 
 const bem = bn.create('header');
 

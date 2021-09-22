@@ -1,8 +1,8 @@
-import { Content, Footer, Header, Sidebar } from 'components/Layout';
-import PageSpinner from 'components/PageSpinner';
+import { Content, Footer, Header, Sidebar } from '../Layout';
+import PageSpinner from '../PageSpinner';
 import React from 'react';
 import NotificationSystem from 'react-notification-system';
-import { NOTIFICATION_SYSTEM_STYLE } from 'utils/constants';
+import { NOTIFICATION_SYSTEM_STYLE } from '../../utils/constants';
 import DashboardPage from '../../pages/DashboardPage';
 
 let daat = []
@@ -33,96 +33,60 @@ class MainLayout extends React.Component {
     }
   }
 
-  static getDerivedStateFromProps(props, state) { 
-    console.log("testing");
-    return {menuData: state.menuData}
+  static getDerivedStateFromProps(props, state) {
+    return { menuData: state.menuData }
   }
 
   componentDidMount() {
     this.checkBreakpoint(this.props.breakpoint);
 
-    this.eventSource = new EventSource("http://localhost:8080/aether-hestia-audit-im-1.0.0-SNAPSHOT/rest/itops/subscribe");
-
-    this.eventSource.onmessage = e => {
-      console.log("e.data onmessage: " + e.data);
-    };
-
-    this.eventSource.addEventListener("itops", (e) => {
-      console.log("e.data onitops: " + e.data);
-      daat = JSON.parse("[" + e.data + "]");
-
-      if (daat.length > 0) {  
-        processingPlants = this.collectProcessingPlants(daat);
-        workshops = this.collectWorkshops(processingPlants);
-        wups = this.collectWups(workshops);
-        endpoints = this.collectEndpoints(wups);
-  
-        treeDataNavMenu = this.createNavigationMenu();
-  
-        console.log('treeDataNavMenu size is: ' + treeDataNavMenu.length);
-  
-        this.setState(Object.assign({}, { data: daat, menuData: treeDataNavMenu, dashboardData: daat }));
-      }
-    });
-
-    this.eventSource.onerror = e => {
-      console.log("stop updates, crash...")
-      this.stopUpdates();
-    }
-  }
-
-  collectProcessingPlants = data => {
-    return data[0].reduce((acc, curr) => {
-      return acc.set(curr['nodeId'], curr);
-    }, new Map());
-  }
-
-  collectWorkshops = processingPlant => {
-    const workshops = new Map();
-    processingPlant.forEach((value, key) => {
-      return value['workshops'].reduce((acc, curr) => {
-        return acc.set(key + '::' + curr['nodeId'], curr);
-      }, workshops);
-    });
-    return workshops;
-  }
-
-  collectWups = workshops => {
-    const wups = new Map();
-    workshops.forEach((value, key) => {
-      return value['wups'].reduce((acc, curr) => {
-        return acc.set(key + '::' + curr['nodeId'], curr);
-      }, wups);
-    });
-    return wups;
-  }
-
-  collectEndpoints = wups => {
-    const endpoints = new Map();
-    wups.forEach((value, key) => {
-      return value['endpoints'].reduce((acc, curr) => {
-        return acc.set(key + '::' + curr['nodeId'], curr);
-      }, endpoints);
-    });
-    return endpoints;
-  }
-
-  createNavigationMenu = () => {
-    const menus = [];
-    processingPlants.forEach((value, key) => {
-      menus.push({ label: key, id: key, parentId: null, items: null });
-    });
-    workshops.forEach((value, key) => {
-      const parent = key.substring(0, key.lastIndexOf('::'));
-      menus.push({ label: key, id: key, parentId: parent, items: null });
-    });
-    wups.forEach((value, key) => {
-      const parent = key.substring(0, key.lastIndexOf('::'));
-      const items = [];
-      value["endpoints"].forEach(endpoint => {
-        items.push({ label: key, id: key + '::' + endpoint['nodeId'], parentId: parent })
+    fetch('http://localhost:18002/pegacorn/internal/itops/r1/ITOpsTopologyGraph')
+      .then(res => res.json())
+      .then((data) => {
+        if (daat) {
+          treeDataNavMenu = this.createNavigationMenu(data);
+          this.setState(Object.assign({}, { data: data, menuData: treeDataNavMenu, dashboardData: data }));
+        }
       });
-      menus.push({ label: key, id: key, parentId: parent, items: items });
+
+    // NOTE: Below commented out code uses server sent push events, above uses fetch pull events. Need to put below back.
+
+    // this.eventSource = new EventSource("http://localhost:8080/aether-hestia-audit-im-1.0.0-SNAPSHOT/rest/itops/subscribe");
+
+    // this.eventSource.onmessage = e => {
+    //   console.log("e.data onmessage: " + e.data);
+    // };
+
+    // this.eventSource.addEventListener("itops", (e) => {
+    //   console.log("e.data onitops: " + e.data);
+    // data = JSON.parse("[" + e.data + "]");
+
+    //   if (data.length > 0) {  
+    //     treeDataNavMenu = this.createNavigationMenu();
+    //     this.setState(Object.assign({}, { data: data, menuData: treeDataNavMenu, dashboardData: data }));
+    //   }
+    // });
+
+    // this.eventSource.onerror = e => {
+    //   console.log("stop updates, crash...")
+    //   this.stopUpdates();
+    // }
+  }
+
+  createNavigationMenu = (data) => {
+    const menus = [];
+    Object.entries(data.processingPlants).forEach(([pKey, pValue]) => {
+      menus.push({ label: pKey, id: pValue, parentId: null, items: null });
+      Object.entries(pValue.workshops).forEach(([wKey, wValue]) => {
+        menus.push({ label: wKey, id: wValue, parentId: pValue, items: null });
+        Object.entries(wValue.workUnitProcessors).forEach(([wupKey, wupValue]) => {
+          const items = [];
+          Object.entries(wupValue.endpoints).forEach(([eKey, eValue]) => {
+            items.push({ label: eKey, id: eValue, parentId: wupValue })
+          });
+          menus.push({ label: wupKey, id: wupValue, parentId: wValue, items: items });
+        });
+      });
     });
     return menus;
   }
@@ -142,17 +106,17 @@ class MainLayout extends React.Component {
 
   handleMenuItemClick = navigationMenuId => {
     let selected = null;
-    if (processingPlants.has(navigationMenuId)) {
-      selected = processingPlants.get(navigationMenuId);
-    } else if (workshops.has(navigationMenuId)) {
-      selected = workshops.get(navigationMenuId);
-    } else if (wups.has(navigationMenuId)) {
-      selected = wups.get(navigationMenuId);
-    } else {
-      selected = endpoints.get(navigationMenuId);
-    }
+    // if (processingPlants.has(navigationMenuId)) {
+    //   selected = processingPlants.get(navigationMenuId);
+    // } else if (workshops.has(navigationMenuId)) {
+    //   selected = workshops.get(navigationMenuId);
+    // } else if (wups.has(navigationMenuId)) {
+    //   selected = wups.get(navigationMenuId);
+    // } else {
+    //   selected = endpoints.get(navigationMenuId);
+    // }
 
-    this.setState({dashboardData: selected});
+    this.setState({ dashboardData: navigationMenuId });
   }
 
   checkBreakpoint(breakpoint) {

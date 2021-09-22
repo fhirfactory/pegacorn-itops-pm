@@ -2,7 +2,7 @@ import Tree from '@naisutech/react-tree';
 import React from 'react';
 import { MdDashboard } from 'react-icons/md';
 import { Navbar } from 'reactstrap';
-import bn from 'utils/bemnames';
+import bn from '../../utils/bemnames';
 
 const navItems = [
   { to: '/', name: 'processing plants', exact: true, Icon: MdDashboard },
@@ -56,7 +56,10 @@ class Sidebar extends React.Component {
             </span>
           </Navbar>
 
-          <Tree nodes={this.state.refreshedData} isLoading={this.state.refreshedData.length < 1} animations={true} onSelect={this.selectMenuItem} />
+          <Tree nodes={this.state.refreshedData}
+            isLoading={this.state.refreshedData.length < 1}
+            animations={true}      
+            onSelect={this.selectMenuItem} />
         </div>
       </aside>
     );
