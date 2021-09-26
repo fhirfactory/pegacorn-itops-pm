@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader, Col, ListGroup, ListGroupItem, Row } from '
 import { getColor } from '../utils/colors';
 import { NOTIFICATION_SYSTEM_STYLE } from '../utils/constants';
 import { AppContext } from '../components/Layout/Sidebar';
+import { objectOf } from 'prop-types';
 
 const today = new Date();
 const lastWeek = new Date(
@@ -68,13 +69,49 @@ class DashboardPage extends React.Component {
   }
 
   fetchOnDemandMetrics = (eventName) => {
-    this.notificationSystem.addNotification({
-      title: <MdImportantDevices />,
-      message: eventName + ' not connected to service yet.',
-      level: 'warning',
-      autoDismiss: 5,
-      dismissible: 'click'
-    });
+    const componentID = this.state.refreshedData['componentID'];
+    const type = this.state.refreshedData['nodeType'];
+    let suffix = '';
+      if(type == 'ITOPS_MONITORED_PROCESSING_PLANT') {
+        suffix = 'ProcessingPlant/';
+      } else if(type == 'ITOPS_MONITORED_WORK_UNIT_PROCESSOR') {
+        suffix = 'WorkUnitProcessor/';
+      }
+      //TODO case where metrics or sub AND no wrong type
+    if(componentID !== undefined ) {
+      const prefix = 'http://localhost:18002/pegacorn/internal/itops/r1/';
+      let endpoint = '';
+      
+      switch(eventName) {
+        case 'Metrics':
+          endpoint = prefix + suffix + componentID + '/ITOpsMetrics';
+          break;
+        case 'PubSub':
+          endpoint = prefix + suffix + componentID + '/PublishSubscribeReport';
+          break;
+        case 'Audit':
+          endpoint = prefix + 'AuditEvents/' + componentID;
+          break;
+      }
+      alert(endpoint);
+      fetch(endpoint)
+      .then(res => res.json());
+      //TODO parse endpoint
+      // .then((data) => {
+      //   if (daat) {
+      //     treeDataNavMenu = this.createNavigationMenu(data);
+      //     this.setState(Object.assign({}, { data: data, menuData: treeDataNavMenu, dashboardData: data }));
+      //   }
+      // });
+    } else {
+      this.notificationSystem.addNotification({
+        title: <MdImportantDevices />,
+        message:  eventName + ' invalid for selected',
+        level: 'warning',
+        autoDismiss: 5,
+        dismissible: 'click'
+      });
+    }
   }
 
   AuditView = () => {
@@ -122,15 +159,15 @@ class DashboardPage extends React.Component {
               <ListGroup flush>
                 <ListGroupItem>
                   <MdInsertChart size={25} color={primaryColor} /> View Metrics{' '}
-                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("View Metrics")}></MdUpdate>
+                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("Metrics")}></MdUpdate>
                 </ListGroupItem>
                 <ListGroupItem>
                   <MdBubbleChart size={25} color={primaryColor} /> View Subscription Map{' '}
-                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("View Subscrition Map")}></MdUpdate>
+                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("PubSub")}></MdUpdate>
                 </ListGroupItem>
                 <ListGroupItem>
                   <MdShowChart size={25} color={primaryColor} /> View Audit Trail{' '}
-                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("View Audit Trail")}></MdUpdate>
+                  <MdUpdate size="1.5em" style={{ cursor: "pointer" }} onClick={() => this.fetchOnDemandMetrics("Audit")}></MdUpdate>
                   <br></br>
                   <this.AuditView></this.AuditView>
                 </ListGroupItem>
