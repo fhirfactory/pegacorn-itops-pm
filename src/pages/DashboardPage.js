@@ -22,7 +22,8 @@ class DashboardPage extends React.Component {
     this.state = {
       data: [],
       menuData: [],
-      refreshedData: []
+      refreshedData: [],
+      auditData: ''
     };
     console.log("constructor...");
   }
@@ -71,42 +72,38 @@ class DashboardPage extends React.Component {
   fetchOnDemandMetrics = (eventName) => {
     const componentID = this.state.refreshedData['componentID'];
     const type = this.state.refreshedData['nodeType'];
+    let endpoint = '';
     let suffix = '';
-      if(type == 'ITOPS_MONITORED_PROCESSING_PLANT') {
+      if(type === 'ITOPS_MONITORED_PROCESSING_PLANT') {
         suffix = 'ProcessingPlant/';
-      } else if(type == 'ITOPS_MONITORED_WORK_UNIT_PROCESSOR') {
+      } else if(type === 'ITOPS_MONITORED_WORK_UNIT_PROCESSOR') {
         suffix = 'WorkUnitProcessor/';
       }
-      //TODO case where metrics or sub AND no wrong type
     if(componentID !== undefined ) {
       const prefix = 'http://localhost:18002/pegacorn/internal/itops/r1/';
-      let endpoint = '';
-      
-      switch(eventName) {
-        case 'Metrics':
-          endpoint = prefix + suffix + componentID + '/ITOpsMetrics';
-          break;
-        case 'PubSub':
-          endpoint = prefix + suffix + componentID + '/PublishSubscribeReport';
-          break;
-        case 'Audit':
-          endpoint = prefix + 'AuditEvents/' + componentID;
-          break;
+      if(eventName === 'Audit') {
+        endpoint = prefix + 'AuditEvents/' + componentID;
       }
-      alert(endpoint);
+     if(suffix !== '') {
+       if(eventName === 'Metrics') {
+        endpoint = prefix + suffix + componentID + '/ITOpsMetrics';
+       }
+       if(eventName === 'PubSub') {
+        endpoint = prefix + suffix + componentID + '/PublishSubscribeReport';
+       }
+     }
+    } 
+    if(endpoint !== '') {
       fetch(endpoint)
-      .then(res => res.json());
-      //TODO parse endpoint
-      // .then((data) => {
-      //   if (daat) {
-      //     treeDataNavMenu = this.createNavigationMenu(data);
-      //     this.setState(Object.assign({}, { data: data, menuData: treeDataNavMenu, dashboardData: data }));
-      //   }
-      // });
-    } else {
+      .then(res => res.json()) 
+      .then((data) => {
+        this.state.auditData = data;
+        this.forceUpdate();
+      });
+     } else {
       this.notificationSystem.addNotification({
         title: <MdImportantDevices />,
-        message:  eventName + ' invalid for selected',
+        message:  eventName + ' invalid for selected object',
         level: 'warning',
         autoDismiss: 5,
         dismissible: 'click'
@@ -115,21 +112,29 @@ class DashboardPage extends React.Component {
   }
 
   AuditView = () => {
-    let testString = '{\n  \"resourceType\": \"Communication\",\n  \"identifier\": [ {\n    \"type\": {\n      \"coding\": [ {\n        \"system\": \"http://ontology.fhirfactory.net/fhir/code-systems/identifier-type\",\n        \"code\": \"idcode:communication.HL7v2-container\"\n      } ],\n      \"text\": \"idcode:communication.HL7v2-container --> \"\n    },\n    \"system\": \"AETHER/local/fhir/code-systems/identifiers\",\n    \"value\": \"1501\",\n    \"period\": {\n      \"start\": \"2021-08-01T22:31:05+00:00\"\n    },\n    \"assigner\": {\n      \"type\": \"Oranization\",\n      \"identifier\": {\n        \"use\": \"secondary\",\n        \"type\": {\n          \"coding\": [ {\n            \"system\": \"http://terminology.hl7.org/ValueSet/v2-0203\",\n            \"code\": \"RI\"\n          } ],\n          \"text\": \"Generalized Resource Identifier\"\n        },\n        \"system\": \"FHIRFactory\",\n        \"value\": \"TBA\",\n        \"period\": {\n          \"start\": \"2021-08-30T02:23:36+00:00\"\n        },\n        \"assigner\": {\n          \"reference\": \"Organization/FHIRFactory\"\n        }\n      },\n      \"display\": \"Australian Capital Territory Health Services\"\n    }\n  } ],\n  \"status\": \"completed\",\n  \"priority\": \"routine\",\n  \"payload\": [ {\n    \"extension\": [ {\n      \"url\": \"http://www.fhirfactory.net/pegacorn/FHIR/R4/Communication/communication_payload_type_extension\",\n      \"valueString\": \"{\\\"dataParcelDefiner\\\":\\\"HL7\\\",\\\"dataParcelCategory\\\":\\\"Message\\\",\\\"dataParcelSubCategory\\\":\\\"ADT\\\",\\\"dataParcelResource\\\":\\\"A04\\\",\\\"dataParcelSegment\\\":null,\\\"dataParcelAttribute\\\":null,\\\"dataParcelDiscriminatorType\\\":null,\\\"dataParcelDiscriminatorValue\\\":null,\\\"version\\\":\\\"2.4\\\"}\"\n    } ],\n    \"contentString\": \"MSH|^~\\\\&|||||20210801153105.221-0700||ADT^A04^ADT_A01|1501|T|2.4\\r\"\n  } ]\n}';
-    testString = JSON.parse(testString);
+    // let testString = '{\n  \"resourceType\": \"Communication\",\n  \"identifier\": [ {\n    \"type\": {\n      \"coding\": [ {\n        \"system\": \"http://ontology.fhirfactory.net/fhir/code-systems/identifier-type\",\n        \"code\": \"idcode:communication.HL7v2-container\"\n      } ],\n      \"text\": \"idcode:communication.HL7v2-container --> \"\n    },\n    \"system\": \"AETHER/local/fhir/code-systems/identifiers\",\n    \"value\": \"1501\",\n    \"period\": {\n      \"start\": \"2021-08-01T22:31:05+00:00\"\n    },\n    \"assigner\": {\n      \"type\": \"Oranization\",\n      \"identifier\": {\n        \"use\": \"secondary\",\n        \"type\": {\n          \"coding\": [ {\n            \"system\": \"http://terminology.hl7.org/ValueSet/v2-0203\",\n            \"code\": \"RI\"\n          } ],\n          \"text\": \"Generalized Resource Identifier\"\n        },\n        \"system\": \"FHIRFactory\",\n        \"value\": \"TBA\",\n        \"period\": {\n          \"start\": \"2021-08-30T02:23:36+00:00\"\n        },\n        \"assigner\": {\n          \"reference\": \"Organization/FHIRFactory\"\n        }\n      },\n      \"display\": \"Australian Capital Territory Health Services\"\n    }\n  } ],\n  \"status\": \"completed\",\n  \"priority\": \"routine\",\n  \"payload\": [ {\n    \"extension\": [ {\n      \"url\": \"http://www.fhirfactory.net/pegacorn/FHIR/R4/Communication/communication_payload_type_extension\",\n      \"valueString\": \"{\\\"dataParcelDefiner\\\":\\\"HL7\\\",\\\"dataParcelCategory\\\":\\\"Message\\\",\\\"dataParcelSubCategory\\\":\\\"ADT\\\",\\\"dataParcelResource\\\":\\\"A04\\\",\\\"dataParcelSegment\\\":null,\\\"dataParcelAttribute\\\":null,\\\"dataParcelDiscriminatorType\\\":null,\\\"dataParcelDiscriminatorValue\\\":null,\\\"version\\\":\\\"2.4\\\"}\"\n    } ],\n    \"contentString\": \"MSH|^~\\\\&|||||20210801153105.221-0700||ADT^A04^ADT_A01|1501|T|2.4\\r\"\n  } ]\n}';
+    if(this.state.auditData !== '') {
+       let testString = this.state.auditData;
+      return (
+        <div style={{ marginTop: "10px" }}>
+          <ReactJson
+            src={testString}
+            name={false}
+            theme={"codeschool"}
+            collapseStringsAfterLength={60}
+            indentWidth={2}
+            style={{ fontSize: "small" }}
+            onSelect={(select) => this.clickSelect(select)} />
+        </div>
+      ); 
+    } else {
+      return (
+        <div style={{ marginTop: "10px" }}>
+          <p>No component selected.</p>
+        </div>
 
-    return (
-      <div style={{ marginTop: "10px" }}>
-        <ReactJson
-          src={testString}
-          name={false}
-          theme={"codeschool"}
-          collapseStringsAfterLength={60}
-          indentWidth={2}
-          style={{ fontSize: "small" }}
-          onSelect={(select) => this.clickSelect(select)} />
-      </div>
-    );
+      );
+    }
   }
 
   render() {
